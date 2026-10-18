@@ -1,7 +1,9 @@
-name: Deploy Extraction Functions (GCP Cloud Run)
+name: CI & Selective Deploy (GCP Cloud Run)
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -11,7 +13,28 @@ env:
   ARTIFACT_REPO_NAME: serverless-extractors
 
 jobs:
+  ci:
+    name: Validate Configs & Deploy Controller Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies & run CI suite
+        run: |
+          pip install -e ".[dev]"
+          ruff check .
+          pytest tests/ci -v
+
   deploy:
+    name: Selective Deploy to GCP Cloud Run
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.GCP_PROJECT_ID != ''
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -24,17 +47,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies & run CI checks
-        run: |
-          pip install -e ".[dev]"
-          pytest tests/ci -v
+      - name: Install dependencies
+        run: pip install -e .
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Set up Cloud SDK & Docker auth
+      - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
