@@ -1,0 +1,24 @@
+// Configuração declarativa de Cloud Run Service + Cloud Scheduler
+{
+  "memory": "512Mi",
+  "timeout": "840s",
+  "scheduler": {
+    "state": "PAUSED",
+    "cron": "0 9 * * *",
+    "timezone": "America/Sao_Paulo",
+    "http_method": "POST",
+    "body": { "reference_date": null },
+    "headers": { "Content-Type": "application/json" },
+    "attempt_deadline": "180s",
+    // Camada Raw opera em APPEND: retry = 0 evita duplicatas em falhas transitórias
+    "retry": {
+      "max_retry_attempts": 0,
+      "max_retry_duration": "0s"
+    }
+  },
+  "raw": {
+    "table": "contrato",
+    "load_mode": "APPEND",
+    "dataset": "raw_ingestion"
+  }
+}

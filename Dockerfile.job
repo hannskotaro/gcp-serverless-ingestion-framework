@@ -1,0 +1,32 @@
+# ── Cloud Run Job - sem gunicorn, sem Flask ───────────────────────────────────
+# Use este Dockerfile exclusivamente para Jobs (processo que termina).
+# Para Services (HTTP), usar o Dockerfile padrão.
+
+# ── stage 1: instala dependências com uv ──────────────────────────────────────
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project --no-dev
+
+# ── stage 2: imagem final mínima ──────────────────────────────────────────────
+FROM python:3.12-slim-bookworm AS runtime
+
+WORKDIR /app
+
+COPY --from=builder /app/.venv /app/.venv
+COPY shared/ ./shared/
+COPY functions/ ./functions/
+
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
+
+# Entrypoint parametrizado, mesmo padrão do Dockerfile de Service. O default
+# preserva o comportamento anterior quando o build não passa --build-arg.
+ARG FUNCTION_NAME=extraction_function_batch_job_example
+ENV FUNCTION_NAME=${FUNCTION_NAME}
+
+CMD ["sh", "-c", "python functions/${FUNCTION_NAME}/main.py"]

@@ -1,0 +1,27 @@
+// Configuração declarativa de Cloud Run Job (batch sem servidor HTTP)
+{
+  "runtime": "cloud_run_job",
+  "memory": "1Gi",
+  "cpu": 1,
+  "timeout": "3600s",
+  "max_retries": 0,
+  "parallelism": 1,
+  "tasks": 1,
+  "scheduler": {
+    "state": "EXTERNAL_EXISTING",
+    "name": "extraction-function-batch-job-example-daily",
+    "cron": "0 6 * * *",
+    "timezone": "America/Sao_Paulo"
+  },
+  // Direct VPC egress para origens que exigem IP público estático via Cloud NAT
+  "network": {
+    "network": "default",
+    "subnet": "static-egress-subnet",
+    "vpc_egress": "all-traffic"
+  },
+  "raw": {
+    "table": "batch_contracts_snapshot",
+    "load_mode": "APPEND",
+    "dataset": "raw_ingestion"
+  }
+}

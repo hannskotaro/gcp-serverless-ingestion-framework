@@ -1,0 +1,22 @@
+{
+  "memory": "512Mi",
+  "timeout": "300s",
+  "scheduler": {
+    "state": "ENABLED",
+    "cron": "0 10 * * *",
+    "timezone": "UTC",
+    "http_method": "POST",
+    "body": { "reference_date": null },
+    "headers": { "Content-Type": "application/json" },
+    "attempt_deadline": "300s",
+    "retry": {
+      "max_retry_attempts": 0,
+      "max_retry_duration": "0s"
+    }
+  },
+  "raw": {
+    "table": "di_pre_252",
+    "load_mode": "APPEND",
+    "dataset": "raw_ingestion"
+  }
+}
